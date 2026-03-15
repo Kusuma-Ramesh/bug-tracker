@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Bug Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        :root{
+          --bg:#0a0d14;--bg2:#111520;--bg3:#161b27;--bg4:#1c2235;
+          --border:#ffffff14;--border2:#ffffff22;
+          --text:#e8eaf0;--text2:#8b91a8;--text3:#555d78;
+          --accent:#4f7cff;--green:#00d4aa;--red:#ff6b6b;--orange:#ff9f43;--purple:#a78bfa;--yellow:#ffc107;
+        }
+        body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+        .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+        .logo{font-weight:700;font-size:18px;display:flex;align-items:center;gap:10px}
+        .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#4f7cff,#00d4aa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700}
+        .pipeline-pill{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid #00d4aa44;border-radius:20px;padding:5px 14px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--green)}
+        .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        .main{padding:28px 24px}
+        .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+        .page-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+        .page-title span{color:var(--accent)}
+        .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'Syne',sans-serif;transition:all 0.15s}
+        .btn-primary{background:var(--accent);color:#fff}
+        .btn-primary:hover{background:#3d6aee}
+        .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+        .btn-ghost:hover{background:var(--bg3);color:var(--text)}
+        .btn-sm{padding:6px 12px;font-size:12px}
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+        .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+        .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .stat-val{font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .devops-loop{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:0}
+        .phase{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
+        .phase:not(:last-child)::after{content:'→';position:absolute;right:-6px;top:14px;color:var(--text3);font-size:13px}
+        .phase-box{padding:6px 10px;border-radius:6px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px}
+        .phase-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+        .ph-plan{background:#1a2040;color:#4f7cff;border:1px solid #4f7cff33}
+        .ph-code{background:#1a2a30;color:#00d4aa;border:1px solid #00d4aa33}
+        .ph-build{background:#2a2010;color:#ff9f43;border:1px solid #ff9f4333}
+        .ph-test{background:#1a1a2a;color:#a78bfa;border:1px solid #a78bfa33}
+        .ph-release{background:#1a2a20;color:#00d4aa;border:1px solid #00d4aa33}
+        .ph-deploy{background:#2a1a1a;color:#ff6b6b;border:1px solid #ff6b6b33}
+        .ph-operate{background:#1a2040;color:#4f7cff;border:1px solid #4f7cff33}
+        .ph-monitor{background:#2a2510;color:#ffc107;border:1px solid #ffc10733}
+        .panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+        .panel-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+        .panel-title{font-size:14px;font-weight:600}
+        .filter-tabs{display:flex;gap:4px}
+        .ftab{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text3);transition:all 0.15s;border:none;background:none;font-family:'Syne',sans-serif}
+        .ftab.active{background:var(--bg4);color:var(--text)}
+        .bug-row{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;transition:background 0.15s}
+        .bug-row:hover{background:var(--bg3)}
+        .bug-row:last-child{border-bottom:none}
+        .bug-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);width:52px;flex-shrink:0}
+        .bug-info{flex:1;min-width:0}
+        .bug-title{font-size:13px;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .bug-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .tag{font-size:10px;padding:2px 8px;border-radius:5px;font-weight:500;font-family:'JetBrains Mono',monospace}
+        .t-critical{background:#ff6b6b22;color:#ff6b6b;border:1px solid #ff6b6b33}
+        .t-high{background:#ff9f4322;color:#ff9f43;border:1px solid #ff9f4333}
+        .t-medium{background:#ffc10722;color:#ffc107;border:1px solid #ffc10733}
+        .t-low{background:#00d4aa22;color:#00d4aa;border:1px solid #00d4aa33}
+        .s-open{background:#4f7cff22;color:#4f7cff;border:1px solid #4f7cff33}
+        .s-progress{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa33}
+        .s-resolved{background:#00d4aa22;color:#00d4aa;border:1px solid #00d4aa33}
+        .s-closed{background:#55557722;color:#888;border:1px solid #44444433}
+        .assignee{font-size:11px;color:var(--text3)}
+        .bug-actions{display:flex;gap:6px}
+        .act-btn{width:28px;height:28px;border-radius:6px;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.15s}
+        .act-btn:hover{background:var(--bg3);color:var(--text)}
+        .empty{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+        .modal-wrap{display:none;position:fixed;inset:0;background:#00000090;z-index:100;align-items:center;justify-content:center}
+        .modal-wrap.open{display:flex}
+        .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:500px;max-width:95vw;padding:28px}
+        .modal-title{font-size:17px;font-weight:700;margin-bottom:20px}
+        .form-row{margin-bottom:14px}
+        .form-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block;font-weight:500}
+        .form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:13px;font-family:'Syne',sans-serif;outline:none}
+        .form-input:focus{border-color:var(--accent)}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+        .toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--green);color:var(--green);padding:12px 20px;border-radius:10px;font-size:13px;font-family:'JetBrains Mono',monospace;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none}
+        .toast.show{opacity:1}
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="logo">
+        <div class="logo-icon">BT</div>
+        DevOps Bug Tracker
+    </div>
+    <div class="pipeline-pill"><span class="dot"></span> Pipeline Active</div>
+</div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">Bug <span>Dashboard</span></div>
+        <button class="btn btn-primary" onclick="openModal()">+ New Bug</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div class="stat-val" id="s-total" style="color:var(--text)">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Open</div>
+            <div class="stat-val" id="s-open" style="color:#4f7cff">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Resolved</div>
+            <div class="stat-val" id="s-resolved" style="color:#00d4aa">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Critical</div>
+            <div class="stat-val" id="s-critical" style="color:#ff6b6b">0</div>
+        </div>
+    </div>
+
+    <div class="devops-loop">
+        <div class="phase"><div class="phase-box ph-plan">PLAN</div><div class="phase-label">Plan</div></div>
+        <div class="phase"><div class="phase-box ph-code">CODE</div><div class="phase-label">Code</div></div>
+        <div class="phase"><div class="phase-box ph-build">BUILD</div><div class="phase-label">Build</div></div>
+        <div class="phase"><div class="phase-box ph-test">TEST</div><div class="phase-label">Test</div></div>
+        <div class="phase"><div class="phase-box ph-release">RELEASE</div><div class="phase-label">Release</div></div>
+        <div class="phase"><div class="phase-box ph-deploy">DEPLOY</div><div class="phase-label">Deploy</div></div>
+        <div class="phase"><div class="phase-box ph-operate">OPERATE</div><div class="phase-label">Operate</div></div>
+        <div class="phase"><div class="phase-box ph-monitor" style="animation:pulse 2s infinite">MONITOR</div><div class="phase-label">Monitor</div></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <div class="panel-title">Bug Reports</div>
+            <div class="filter-tabs">
+                <button class="ftab active" onclick="filterBugs('all',this)">All</button>
+                <button class="ftab" onclick="filterBugs('OPEN',this)">Open</button>
+                <button class="ftab" onclick="filterBugs('IN_PROGRESS',this)">In Progress</button>
+                <button class="ftab" onclick="filterBugs('RESOLVED',this)">Resolved</button>
+            </div>
+        </div>
+        <div id="bug-list"></div>
+    </div>
+</div>
+
+<div class="modal-wrap" id="modal">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">Report New Bug</div>
+        <input type="hidden" id="edit-id">
+        <div class="form-row">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="f-title" placeholder="Brief description of the issue">
+        </div>
+        <div class="form-row">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" id="f-desc" rows="3" placeholder="Steps to reproduce..."></textarea>
+        </div>
+        <div class="form-grid">
+            <div class="form-row">
+                <label class="form-label">Priority</label>
+                <select class="form-input" id="f-priority">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH" selected>High</option>
+                    <option value="CRITICAL">Critical</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label class="form-label">Status</label>
+                <select class="form-input" id="f-status">
+                    <option value="OPEN" selected>Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">Assign To</label>
+            <input class="form-input" id="f-assign" placeholder="Developer name">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitBug()">Save Bug</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const API = '/api/bugs';
+    let allBugs = [];
+    let currentFilter = 'all';
+
+    function pClass(p){return{CRITICAL:'t-critical',HIGH:'t-high',MEDIUM:'t-medium',LOW:'t-low'}[p]||'t-low'}
+    function sClass(s){return{OPEN:'s-open',IN_PROGRESS:'s-progress',RESOLVED:'s-resolved',CLOSED:'s-closed'}[s]||'s-open'}
+
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      t.textContent=msg;t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2500);
+    }
+
+    function updateStats(bugs){
+      document.getElementById('s-total').textContent=bugs.length;
+      document.getElementById('s-open').textContent=bugs.filter(b=>b.status==='OPEN').length;
+      document.getElementById('s-resolved').textContent=bugs.filter(b=>b.status==='RESOLVED').length;
+      document.getElementById('s-critical').textContent=bugs.filter(b=>b.priority==='CRITICAL').length;
+    }
+
+    function renderBugs(bugs){
+      const list=document.getElementById('bug-list');
+      if(!bugs.length){list.innerHTML='<div class="empty">No bugs found</div>';return;}
+      list.innerHTML=bugs.map(b=>`
+        <div class="bug-row">
+          <div class="bug-id">#${b.id}</div>
+          <div class="bug-info">
+            <div class="bug-title">${b.title}</div>
+            <div class="bug-meta">
+              <span class="tag ${pClass(b.priority)}">${b.priority}</span>
+              <span class="tag ${sClass(b.status)}">${b.status.replace('_',' ')}</span>
+              ${b.assignedTo?`<span class="assignee">→ ${b.assignedTo}</span>`:''}
+            </div>
+          </div>
+          <div class="bug-actions">
+            <div class="act-btn" onclick="editBug(${b.id})" title="Edit">✎</div>
+            <div class="act-btn" onclick="deleteBug(${b.id})" title="Delete">✕</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterBugs(f,el){
+      currentFilter=f;
+      document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+      el.classList.add('active');
+      renderBugs(f==='all'?allBugs:allBugs.filter(b=>b.status===f));
+    }
+
+    async function loadBugs(){
+      try{
+        const r=await fetch(API);
+        allBugs=await r.json();
+      }catch{allBugs=[];}
+      updateStats(allBugs);
+      renderBugs(allBugs);
+    }
+
+    function openModal(){
+      document.getElementById('modal-title').textContent='Report New Bug';
+      document.getElementById('edit-id').value='';
+      document.getElementById('f-title').value='';
+      document.getElementById('f-desc').value='';
+      document.getElementById('f-priority').value='HIGH';
+      document.getElementById('f-status').value='OPEN';
+      document.getElementById('f-assign').value='';
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+    function editBug(id){
+      const b=allBugs.find(x=>x.id===id);
+      if(!b)return;
+      document.getElementById('modal-title').textContent='Edit Bug';
+      document.getElementById('edit-id').value=b.id;
+      document.getElementById('f-title').value=b.title||'';
+      document.getElementById('f-desc').value=b.description||'';
+      document.getElementById('f-priority').value=b.priority||'HIGH';
+      document.getElementById('f-status').value=b.status||'OPEN';
+      document.getElementById('f-assign').value=b.assignedTo||'';
+      document.getElementById('modal').classList.add('open');
+    }
+
+    async function submitBug(){
+      const title=document.getElementById('f-title').value.trim();
+      if(!title){alert('Please enter a title');return;}
+      const bug={
+        title,
+        description:document.getElementById('f-desc').value,
+        priority:document.getElementById('f-priority').value,
+        status:document.getElementById('f-status').value,
+        assignedTo:document.getElementById('f-assign').value
+      };
+      const editId=document.getElementById('edit-id').value;
+      try{
+        if(editId){
+          const r=await fetch(`${API}/${editId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(bug)});
+          const updated=await r.json();
+          allBugs=allBugs.map(b=>b.id==editId?updated:b);
+          showToast('Bug updated');
+        }else{
+          const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bug)});
+          const created=await r.json();
+          allBugs.unshift(created);
+          showToast('Bug created');
+        }
+      }catch{showToast('Error saving bug');}
+      updateStats(allBugs);
+      renderBugs(currentFilter==='all'?allBugs:allBugs.filter(b=>b.status===currentFilter));
+      closeModal();
+    }
+
+    async function deleteBug(id){
+      if(!confirm('Delete this bug?'))return;
+      try{await fetch(`${API}/${id}`,{method:'DELETE'});}catch{}
+      allBugs=allBugs.filter(b=>b.id!==id);
+      updateStats(allBugs);
+      renderBugs(currentFilter==='all'?allBugs:allBugs.filter(b=>b.status===currentFilter));
+      showToast('Bug deleted');
+    }
+
+    document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+    loadBugs();
+</script>
+</body>
+</html>
