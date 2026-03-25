@@ -48,7 +48,7 @@ pipeline {
     steps {
         sh '''
         docker rm -f bug-tracker-pipeline || true
-        docker run -d -p 8083:8082 --name bug-tracker-pipeline bug-tracker:latest
+        docker run -d -p 8083:8082 --name bug-tracker-pipeline bugtracker-app:latest
         '''
     }
 }
