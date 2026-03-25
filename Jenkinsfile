@@ -44,18 +44,14 @@ pipeline {
                 sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
-
         stage('Deploy') {
-            steps {
-                echo 'Deploying container...'
-                sh '''
-                    docker stop bug-tracker || true
-                    docker rm bug-tracker || true
-                    docker run -d -p 8082:8082 --name bug-tracker bug-tracker:latest
-                '''
-            }
-        }
+    steps {
+        sh '''
+        docker rm -f bug-tracker-pipeline || true
+        docker run -d -p 8083:8082 --name bug-tracker-pipeline bug-tracker:latest
+        '''
     }
+}
 
     post {
         success {
