@@ -5,14 +5,14 @@ pipeline {
         IMAGE_NAME = "bugtracker-app"
         IMAGE_TAG = "latest"
     }
-
+    
     stages {
 
         stage('Checkout') {
-            steps {
-                git 'https://github.com/Kusuma-Ramesh/bug-tracker.git'
-            }
-        }
+    steps {
+        git branch: 'main', url: 'https://github.com/Kusuma-Ramesh/bug-tracker.git'
+    }
+}
 
         stage('Build') {
             steps {
